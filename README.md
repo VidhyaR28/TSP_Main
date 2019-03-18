@@ -1,5 +1,5 @@
 # TSP_Main
-This project was developed as a part of an Independent Study with Prof.Brian Johnson. 
+This project was developed by Vidhya Rajendran as a part of an Independent Study with Prof.Brian Johnson. 
 This code can solve four optimization heuristics - Hill Climbing, Genetic Algorithm, Ant Colony Swarm, and Simulated Annealing.
 
 The user is prompted to provide a set of points by clicking on the input panel. There is also the option of "test" points which is a
