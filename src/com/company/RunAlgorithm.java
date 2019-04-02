@@ -13,7 +13,7 @@ import javax.swing.*;
 
 public class RunAlgorithm {
     public static void main(String[] args) {
-        //Creating a frame for the input of the cities through mouse clicks
+        //Creating a frame
         CitiesFrame frame = new CitiesFrame();
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

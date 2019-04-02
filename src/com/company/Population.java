@@ -16,7 +16,9 @@ public class Population extends peopleComparator {
     private static final int EVOLUTION= 500;
 
     private ArrayList<Point2D> points;
+    //heap contains the people in the population
     private List<people> heap;
+    //graph contains the distances between all the points
     private double[][] graph;
     private int heapSize;
     private int size;
@@ -25,13 +27,12 @@ public class Population extends peopleComparator {
     int[] bestTour;
     int mutationCount = 0;
 
-    Random rd = new Random();
-
     XYSeries bestSeries = new XYSeries("Best Distances");
     XYSeries plotSeries = new XYSeries("Other Distances");
     int plotIteration = 0;
     long timeCount;
 
+    // Constructor
     public Population(ArrayList<Point2D> cities, long time) {
         heap = new LinkedList<>();
         points = cities;
@@ -45,9 +46,9 @@ public class Population extends peopleComparator {
             basic.add(i);
         }
 
+        // Creating an initial population with random tour arrangements
         for (int i = 0; i < POPSIZE; i++) {
             ArrayList<Integer> list = (ArrayList<Integer>) makeList().clone();
-            // System.out.println("Person number "+ i + ": "+list.toString());
             double dist = getListDist(list);
             people tempPerson = new people(list, dist);
             addPerson(tempPerson);
@@ -60,13 +61,15 @@ public class Population extends peopleComparator {
     private void solve() {
         int evol = 0;
         while (evol < EVOLUTION) {
-            System.out.println("At start: "+heap.get(0).getDist());
+            //every evolution goes on for a certain number of generations
             for (int i = 1; i <= GENERATIONS; i++) {
                 crossover();
                 mutationCount++;
+                //track for the mutation factor through the generations
                 if (mutationCount % 10 == 0) {
                     mutate();
                 }
+                //At regular intervals, then tour length and time are recorded for plotting the chart
                 plotIteration++;
                 if (plotIteration%2 == 0) {
                     bestSeries.add((double) (System.currentTimeMillis()-timeCount)/1000, getBestDist());
@@ -74,12 +77,10 @@ public class Population extends peopleComparator {
                 }
             }
             evol++;
-            System.out.println("AT END        : "+heap.get(0).getDist());
-            System.out.println("LIST: "+heap.get(0).getList().toString());
-            System.out.println();
         }
     }
 
+    //Matrix of distances between all the points
     private void makeGraph(){
         for (int i = 0; i < size; i++) {
             for (int j = i+1; j < size; j++) {
@@ -97,6 +98,7 @@ public class Population extends peopleComparator {
         return sqrt((x*x) + (y*y));
     }
 
+    //Method to make random tour arrangements for the initial population
     private ArrayList<Integer> makeList() {
         ArrayList<Integer> temp = (ArrayList<Integer>) basic.clone();
         Collections.shuffle(temp);
@@ -104,6 +106,7 @@ public class Population extends peopleComparator {
         return temp;
     }
 
+    //Method to get the tour distance of a particular tour arrangement
     private double getListDist(ArrayList<Integer> list) {
         double dist = graph[list.get(0)][list.get(size-1)];
         for (int i = 0; i < size -1; i++) {
@@ -112,6 +115,9 @@ public class Population extends peopleComparator {
         return dist;
     }
 
+    //Method to add a new member into the population heap
+    //the members of the population are arranged in the increasing order of their tour lengths
+    //When a new member is put into the population, they are arranged based on their tour distance
     private void addPerson(people currentPerson) {
         if (heapSize == 0) {
             heap.add(currentPerson);
@@ -141,10 +147,12 @@ public class Population extends peopleComparator {
         }
     }
 
+    //Method to produce children from the fittest parents
     private void crossover(){
         Random rand = new Random();
         rand.setSeed(rand.nextInt(1000));
 
+        //The top two parents are chosen for crossover - they are just the first two members in the population heap
         ArrayList<Integer> parent1 = (ArrayList<Integer>) heap.get(0).getList().clone();
         ArrayList<Integer> parent2 = (ArrayList<Integer>) heap.get(1).getList().clone();
 
@@ -152,15 +160,20 @@ public class Population extends peopleComparator {
         ArrayList<Integer> child2 = new ArrayList<>();
 
 
-        //Choosing the crossover points - METHOD 2
+        //Choosing the crossover points
         rand.setSeed(rand.nextInt(1000));
+        //A random crossover location is chosen
         int crossover = rand.nextInt(size);
 
+        //The first half of the parent arrangement is given directly to the children
         for (int i = 0; i <= crossover; i++) {
             child1.add(parent1.get(i));
             child2.add(parent2.get(i));
         }
 
+        //The second half of the arrangement for the children comes from the other parent.
+        //But to the avoid repetition of the cities, those cities which aren't already present in the child,
+        //is copied over from the other parent.
         for(int i = 0; i < size; i++) {
             if (!child1.contains(parent2.get(i))) {
                 child1.add(parent2.get(i));
@@ -171,71 +184,23 @@ public class Population extends peopleComparator {
             }
         }
 
-        /*
-        //Choosing the crossover points - METHOD 1
-        int a = rand.nextInt(size);
-        int b = rand.nextInt(size);
-
-        while (a == b || Math.abs(a - b) < 3) {
-            a = rand.nextInt(size);
-            b = rand.nextInt(size);
-        }
-
-        if (b < a) {
-            int dummy = a;
-            a = b;
-            b = dummy;
-        }
-
-        //Crossover process
-        for (int i = a; i < b; i++) {
-            child1.add(parent1.get(i));
-            child2.add(parent2.get(i));
-        }
-
-        int count1 = 0;
-        int count2 = 0;
-        for(int i = 0; i < size; i++) {
-            if (!child1.contains(parent2.get(i))) {
-                if (count1 < a) {
-                    child1.add(count1, parent2.get(i));
-                    count1++;
-                } else {
-                    child1.add(parent2.get(i));
-                }
-            }
-
-            if (!child2.contains(parent1.get(i))) {
-                if (count2 < a) {
-                    child2.add(count2, parent1.get(i));
-                    count2++;
-                } else {
-                    child2.add(parent1.get(i));
-                }
-            }
-        }
-        */
-
         //Making children objects and adding them to heap
         double child1Dist = getListDist(child1);
         people children1 = new people(child1, child1Dist);
         double child2Dist = getListDist(child2);
         people children2 = new people(child2, child2Dist);
 
-        System.out.println(children1.toString());
-        System.out.println(children2.toString());
-        System.out.println();
-
         addPerson(children1);
         addPerson(children2);
 
-        //Removing the last two people
+        //Removing the last two people in the population heap - since they are the least fit in the entire population
         heap.remove(heapSize-1);
         heapSize--;
         heap.remove(heapSize-1);
         heapSize--;
     }
 
+    //Method which randomly chooses two cities and swaps them in the arrangement
     private void mutate() {
         ArrayList<Integer> newList = (ArrayList<Integer>) heap.get(0).getList().clone();
 
@@ -284,6 +249,7 @@ public class Population extends peopleComparator {
     }
 }
 
+//Class to compare two objects of the people class
 class peopleComparator implements Comparator<people> {
     @Override
     public int compare(people p1, people p2) {
@@ -295,24 +261,20 @@ class peopleComparator implements Comparator<people> {
         return 0;
     }
 }
+
 //Class which contains the information about the point and its relationship to its next best neighbour point
 class people {
     private ArrayList<Integer> arrangement;
     private double dist;
 
     //Constructor: takes a point and sets it to this node
-    people(ArrayList<Integer> list, double dist) {
+    people (ArrayList<Integer> list, double dist) {
         this.arrangement = list;
         this.dist = dist;
     }
 
     public double getDist() {
         return dist;
-    }
-
-    public void setArrangement(ArrayList<Integer> list,  double dist) {
-        this.arrangement = list;
-        this.dist = dist;
     }
 
     public ArrayList<Integer> getList() {

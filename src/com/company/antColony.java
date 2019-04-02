@@ -123,6 +123,7 @@ class antColony {
             updateTrails();
             updateBest();
             plotIteration++;
+            //At regular intervals, then tour length and time are recorded for plotting the chart
             if (plotIteration%20 == 0) {
                 bestSeries.add((double) (System.currentTimeMillis()-timeCount)/1000, bestTourLength);
                 plotSeries.add((double) (System.currentTimeMillis()-timeCount)/1000, ants[rand.nextInt(noAnts)].trailLength);
@@ -131,6 +132,7 @@ class antColony {
         }
     }
 
+    //Method to combine to the plot series to be sent back to the panel
     public XYDataset getDataSet() {
         XYSeriesCollection dataSet = new XYSeriesCollection();
         dataSet.addSeries(plotSeries);
@@ -138,17 +140,18 @@ class antColony {
         return dataSet;
     }
 
-    //setup ants
+    //setting up ants - clear the tour arrangements in the ant objects
     private void setupAnts() {
         count = 0;
         for (Ant a: ants) {
             a.clear();
+            //The first city that an ant visits is chosen at random
             a.toVisit(rand.nextInt(noCities));
         }
         count++;
     }
 
-    //move ants
+    //moving ants - the subsequent cities are chosen based on the pheromone deposited by ants during the previous rounds
     private void moveAnts() {
         while (count < noCities) {
             for (Ant a : ants) {
@@ -159,7 +162,7 @@ class antColony {
     }
 
     private int findCity(Ant a) {
-        // sometimes just randomly select
+        // sometimes just randomly select a city
         if (rand.nextDouble() < pr) {
             int t = rand.nextInt(noCities - count); // random town
             int j = -1;
@@ -172,10 +175,12 @@ class antColony {
                 }
             }
         }
-        // calculate probabilities for each town (stored in probs)
+        // calculate probabilities of visiting every other city from the current city
         probTo(a);
-        // randomly select according to probs
+        // randomly select a probability value
         double r = rand.nextDouble();
+        // keep adding the probabilities of the cities to be go next and
+        // the iteration when this probability crosses the random probability, that city is chosen for the next visit
         double tot = 0;
         for (int i = 0; i < noCities; i++) {
             tot += probs[i];
@@ -183,18 +188,25 @@ class antColony {
                 return i;
         }
 
+        // the code never reaches here as the sum of all the probabilities add up to 1
         throw new RuntimeException("Not supposed to get here.");
     }
 
+    //Method to calculate the probability of visiting the next city
     private void probTo(Ant a) {
+        //current city
         int i = a.trail[count-1];
         double pheromone = 0.0;
+        //for all the cities not visited, the previous pheromone deposits there are summed to be used as a denominator
         for (int l = 0; l < noCities; l++) {
             if (!a.visited(l)){
                 pheromone += Math.pow(trails[i][l], alpha) * Math.pow(1.0 / graph[i][l], beta);
             }
         }
+
         for (int j = 0; j < noCities; j++) {
+            //If the city has been visited, the probability is set to 0. If not, then the pheromone deposited
+            // in that city is used as a numerator.
             if (a.visited(j)) {
                 probs[j] = 0.0;
             } else {
@@ -204,7 +216,8 @@ class antColony {
         }
     }
 
-    //update trail
+    //Method to calculate the pheromone deposition based on the distances that the ant travelled
+    //Shorter the distance, larger is this deposition
     private void updateTrails() {
         //evaporation
         for (int i = 0; i < noCities; i++) {
@@ -223,7 +236,7 @@ class antColony {
         }
     }
 
-    //update best
+    //update best - for every iteration, the best tour distance and the arrangement is stored
     private void updateBest() {
         if (bestTourLength == 0) {
             bestTourLength = ants[0].getTrailLength();
@@ -241,8 +254,11 @@ class antColony {
 
     //Inner Class for the Ant behaviour
     class Ant {
+        //Tour arrangement
         int[] trail;
+        //Tour length
         double trailLength = 0.0;
+        //To keep track of whether a city has been visited or not
         boolean[] visited;
 
         //Constructor

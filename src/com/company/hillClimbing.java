@@ -93,7 +93,7 @@ public class hillClimbing {
         return sqrt((x*x)+(y*y));
     }
 
-    // Randomly selected the start point of the arrangement and looks for the best arrangement
+    // Randomly selects the start point of the arrangement and looks for the best arrangement
     private void hillClimbing() {
         int i = 0;
         List<Integer> indicesDone = new ArrayList<>();
@@ -109,7 +109,6 @@ public class hillClimbing {
             List<Integer> toBegin = new ArrayList<>();
             toBegin.add(index);
             double dist = calcDist(index, toBegin);
-            // bestList = current; // new test addition
 
             if (i == 1) {
                 bestDist = dist;
@@ -119,6 +118,7 @@ public class hillClimbing {
                 bestList = current.subList(0,size);
             }
 
+            //At regular intervals, then tour length and time are recorded for plotting the chart
             bestSeries.add((double) (System.currentTimeMillis()-timeCount)/1000, bestDist);
             plotSeries.add((double) (System.currentTimeMillis()-timeCount)/1000, dist);
         }

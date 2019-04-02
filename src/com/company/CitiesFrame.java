@@ -1,5 +1,6 @@
 package com.company;
 
+//JFreeChart imports
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.ChartFactory;
@@ -20,16 +21,22 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
 class CitiesFrame extends JFrame {
+    //Default dimensions of the frame
     private static final int DefaultWidth = 1950;
     private static final int DefaultHeight = 1050;
+    //The scope of cities needs to be accessible across all the sub panels
     private ArrayList<Point2D> cities;
     private int[] bestTour;
 
+    //A test condition to check whether a JChart is already displayed on the output panel
+    //if this test condition is true, the current JChart is removed to display the new JChart
     boolean test2 = false;
 
+    //Sub panels in the frame - defined here so that these panels could be accessed in other panel objects
     private CitiesPanel panel1;
     private OutputPanel panel3;
 
+    //JFreeChart data structure to hold the plot pairs
     XYDataset data;
 
 
@@ -41,6 +48,7 @@ class CitiesFrame extends JFrame {
         OptimizationPanel panel2 = new OptimizationPanel();
         panel3 = new OutputPanel();
 
+        //The three panels are arranged side by side in the frame
         JSplitPane splitPane1 = new JSplitPane(SwingConstants.HORIZONTAL, panel2, panel3);
         JSplitPane splitPane = new JSplitPane(SwingConstants.VERTICAL, splitPane1, panel1);
         splitPane1.setOneTouchExpandable(false);
@@ -51,12 +59,15 @@ class CitiesFrame extends JFrame {
     }
 
 
-
+    //First panel that will take the input points from the user
     class CitiesPanel extends JPanel {
+        // circles list contains all the profiles of the clicked spots
         private ArrayList<Ellipse2D> circles;
         private Ellipse2D currentCircle;
         private static final int radius = 5;
+        // The mouse clicks are converted into (x,y) points
         private ArrayList<Point2D> points;
+        //Test condition to trigger the tour display of the best path
         private boolean test;
         int[] index;
         int size = 0;
@@ -70,10 +81,7 @@ class CitiesFrame extends JFrame {
             points = new ArrayList<Point2D>();
             test = false;
 
-            //Creating and linking new button to panel
-            // JButton finish = new JButton("FINISH");
-            // add(finish);
-
+            //Creating and linking new buttons to panel
             JButton test1 = new JButton("TEST 1");
             add(test1);
 
@@ -85,9 +93,6 @@ class CitiesFrame extends JFrame {
 
 
             //Creating and linking button action
-            // finishAction finishAct = new finishAction();
-            // finish.addActionListener(finishAct);
-
             test1Action test1Act = new test1Action();
             test1.addActionListener(test1Act);
 
@@ -100,8 +105,6 @@ class CitiesFrame extends JFrame {
 
             //Creating mouseListener on the panel for the point collection
             addMouseListener(new MouseHandler());
-
-
         }
 
         //Method to draw the circles
@@ -132,7 +135,7 @@ class CitiesFrame extends JFrame {
             }
         }
 
-        //REDEFINE IT
+        //This method repaints the panel but also triggers the test condition that displays the best tour
         private void redraw(int[] indices) {
             this.index = indices;
             this.size = points.size();
@@ -140,6 +143,7 @@ class CitiesFrame extends JFrame {
             repaint();
         }
 
+        //Over-loading of the redraw method - This method vipes the panel clean
         public void redraw() {
             test = false;
             points.clear();
@@ -160,6 +164,7 @@ class CitiesFrame extends JFrame {
             repaint();
         }
 
+        //Method that generates a set of predefined points for comparison across different heuristic methods
         private void test1() {
             add(new Point2D.Double(455,668));
             add(new Point2D.Double(1184,326));
@@ -183,6 +188,7 @@ class CitiesFrame extends JFrame {
             add(new Point2D.Double(839,107));
         }
 
+        //Method that generates a set of predefined points for comparison across different heuristic methods
         private void test2() {
             add(new Point2D.Double(736,140));
             add(new Point2D.Double(885,176));
@@ -205,23 +211,15 @@ class CitiesFrame extends JFrame {
         }
 
         //Inner class for the Action listener
-        public class finishAction implements ActionListener {
-            public void actionPerformed(ActionEvent event) {
-                // cities = (ArrayList<Point2D>) points.clone();
-            }
-        }
-
         public class test1Action implements ActionListener {
             public void actionPerformed(ActionEvent event) {
                 test1();
-                // cities = (ArrayList<Point2D>) points.clone();
             }
         }
 
         public class test2Action implements ActionListener {
             public void actionPerformed(ActionEvent event) {
                 test2();
-                // cities = (ArrayList<Point2D>) points.clone();
             }
         }
 
@@ -243,8 +241,9 @@ class CitiesFrame extends JFrame {
     }
 
 
-
+    //Second panel that lets the user choose the heuristic method
     public class OptimizationPanel extends JPanel {
+        //GridBag to organize the buttons
         GridBagConstraints c;
 
         private OptimizationPanel() {
@@ -280,16 +279,21 @@ class CitiesFrame extends JFrame {
         }
 
         private void getOption(String name) {
-
+            //These if-else if condition runs based on the option chosen
             if (name.equals("ANT COLONY SWARM")) {
+                //Timer on
                 long startTime = System.currentTimeMillis();
+                //Optimization is triggered and the startTime is sent as a parameter to collect data for the graph
                 antColony optimization = new antColony(cities, startTime);
                 bestTour = optimization.getBest();
                 double tourDist = optimization.getBestDist();
                 data = optimization.getDataSet();
+                //Timer off
                 long endTime = System.currentTimeMillis();
+                //The best tour is displayed on the panel1 - the input panel that collected the points
                 panel1.redraw(bestTour);
                 test2 = true;
+                //The (x,y) data collected during the optimization is sent to the output panel to build the chart
                 panel3.display(endTime-startTime, tourDist, name);
 
             } else if (name.equals("SIMULATED ANNEALING")) {
@@ -342,6 +346,7 @@ class CitiesFrame extends JFrame {
 
 
 
+    //Third panel that outputs the best distance, best time and the graph for comparison
     public class OutputPanel extends JPanel {
         double time;
         double dist;

@@ -43,6 +43,7 @@ public class simulatedAnnealing {
         for( int i = 0; i < size; i++){
             basicIndices.add(i);
         }
+        //Calculates all the distances and stores it in a matrix
         calcMatrix();
         Collections.shuffle(basicIndices);
         bestDist = calcDist(basicIndices);
@@ -51,6 +52,7 @@ public class simulatedAnnealing {
         annealing();
     }
 
+    //Calculates all the distances and stores it in a matrix
     private void calcMatrix(){
         for (int i = 0; i < size-1; i++) {
             for ( int j = i+1; j < size-1; j++) {
@@ -67,8 +69,8 @@ public class simulatedAnnealing {
         return (sqrt((x*x)+(y*y)));
     }
 
+    // For an arrangement of cities, the distance is calculated from searching in the matrix
     private double calcDist (ArrayList<Integer> index) {
-
         int a = index.get(0);
         int b = index.get(size-1);
         double totSum  = dist[a][b];
@@ -86,6 +88,8 @@ public class simulatedAnnealing {
         rand.setSeed(rand.nextInt(100));
         int a = 0;
         int b = 0;
+        //Two cities are chosen at random and if they are the same or have been chosen in the last few iterations,
+        //the process is repeated until these conditions are negated.
         while (a == b) {
             a = rand.nextInt(size);
             b = rand.nextInt(size);
@@ -94,8 +98,10 @@ public class simulatedAnnealing {
             }
         }
 
+        //tabu keeps a track of the last few chosen cities so that it doesn't kep repeating
         tabu.add(a);
         tabu.add(b);
+        //after a certain number of iterations, the last ones in the queue are let go
         if(tabu.size() > (cities.size()*0.5)) {
             while(tabu.size()>(cities.size()*0.5)) {
                 tabu.remove();
@@ -103,6 +109,7 @@ public class simulatedAnnealing {
         }
         basicIndices = (ArrayList<Integer>) alteredIndices.clone();
 
+        //the swap is saved in the alteredIndices, so that it could be reverted back when necessary
         int x = alteredIndices.get(a);
         int y = alteredIndices.get(b);
         alteredIndices.set(a, y);
@@ -126,24 +133,32 @@ public class simulatedAnnealing {
         return D;
     }
 
+    //reverting the swap - just copying over basicIndices into alteredIndices
     private void revertSwap() {
         alteredIndices = (ArrayList<Integer>) basicIndices.clone();
     }
 
 
     private void annealing(){
+        //the number of revertswap called is tracked
         int revertCount = 0;
         int count = 1;
-        double temp = t;
+        double temp;
         while (count <= (size/2)) {
             Collections.shuffle(alteredIndices);
 
+            //initial temp
             temp = t / Math.exp(count);
-            System.out.println("temp initial: " +temp);
+
             for (int i = 0; i < itr; i++) {
+                //the stopping condition based on temperature - a premature halt
                 if (temp > 1 * Math.exp(-(count))) {
+                    //a swap is initiated
                     swap();
                     double D = calcDist(alteredIndices);
+                    //if the swap's distance is better than the current, the arrangement is retained,
+                    //else based on a probability, if the distance does not fall within a randomly selected value,
+                    //the arrangement is reverted
                     if (D <= bestDist) {
                         System.out.println("BEST");
                         bestDist = D;
@@ -152,15 +167,18 @@ public class simulatedAnnealing {
                     } else if (Math.exp((bestDist - D) / temp) < Math.random()) {
                         revertCount++;
                         revertSwap();
+                        //if too many reverts happen, the arrangement is set to the best and then the swaps are run on them
                         if (revertCount > size * 5) {
                             alteredIndices = (ArrayList<Integer>) bestIndices.clone();
                         }
                     }
+                    //At regular intervals, then tour length and time are recorded for plotting the chart
                     plotIteration++;
                     if (plotIteration%2 == 0) {
                         bestSeries.add((double) (System.currentTimeMillis()-timeCount)/1000, bestDist);
                         plotSeries.add((double) (System.currentTimeMillis()-timeCount)/1000, D);
                     }
+                    //temperature reduction
                     temp *= (coolingRate);
                 } else {
                     break;
@@ -185,6 +203,7 @@ public class simulatedAnnealing {
         return bestDist;
     }
 
+    //Method to combine to the plot series to be sent back to the panel
     public XYDataset getDataSet() {
         XYSeriesCollection dataSet = new XYSeriesCollection();
         dataSet.addSeries(plotSeries);
